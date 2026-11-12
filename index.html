@@ -91,7 +91,7 @@ let currentDisplayName = "";
 
 function receiveNameFromKodular() {
     try {
-        const data = window.AppInventor.getWebViewString() || "";
+        const data = window.Kodular.getWebViewString() || "";
 
         // Format baru: USER|username|name
         if (data.startsWith("USER|")) {
