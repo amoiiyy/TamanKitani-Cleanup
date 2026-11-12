@@ -140,8 +140,16 @@ async function loadUserNameFromSupabase() {
 }
 
 
-// Check Kodular WebViewString until user data arrives
-setInterval(receiveNameFromKodular, 500);
+// Wait until Kodular sends the username
+const userNameTimer = setInterval(() => {
+    if (
+        window.Kodular &&
+        window.Kodular.getWebViewString()
+    ) {
+        clearInterval(userNameTimer);
+        loadUserNameFromSupabase();
+    }
+}, 500);
 
 const ACHIEVEMENT_TABLE = "cleanup_achievements";
 
