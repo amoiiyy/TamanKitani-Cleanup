@@ -84,42 +84,64 @@ p{font-weight:500;font-size:1.05rem;line-height:1.35}
                 <p id="fm"></p><p id="best" style="font-size:.95rem"></p>
                 <div class="row"><button class="go" id="again">Play again</button><button class="go alt" id="chg">Change character</button></div></div></div>
 
-        <script>
-		
+        <script>	
+
 let currentUsername = "";
-let currentDisplayName = "";
-
-function receiveNameFromKodular() {
-    try {
-        const data = window.Kodular.getWebViewString() || "";
-
-        // Format baru: USER|username|name
-        if (data.startsWith("USER|")) {
-            const parts = data.split("|");
-            currentUsername = (parts[1] || "").trim();
-            currentDisplayName = (parts[2] || "").trim();
-        }
-
-        // Format lama: NAME|name
-        else if (data.startsWith("NAME|")) {
-            currentDisplayName = data.substring(5).trim();
-        }
-
-        if (currentDisplayName) {
-            document.getElementById("welcomeName").textContent =
-                "Hi, " + currentDisplayName + "!";
-        }
-    } catch (e) {
-        console.log("Unable to receive user data");
-    }
-}
-
-// Check Kodular WebViewString until user data arrives
-setInterval(receiveNameFromKodular, 500);
-
 
 const SUPABASE_URL = "https://wiwupmwlhvwihfojvvwy.supabase.co";
 const SUPABASE_KEY = "sb_publishable_qfO0B3y1o7Gc3EkHpUa8-Q_mCneQ7_e";
+
+async function loadUserNameFromSupabase() {
+    try {
+        const username = String(
+            window.Kodular.getWebViewString() || ""
+        ).trim();
+
+        if (!username) {
+            console.log("No username received from Kodular");
+            return;
+        }
+
+        // Save username for Cleanup achievements
+        currentUsername = username;
+
+        const response = await fetch(
+            `${SUPABASE_URL}/rest/v1/users?username=eq.${encodeURIComponent(username)}&select=name`,
+            {
+                method: "GET",
+                headers: {
+                    "apikey": SUPABASE_KEY,
+                    "Authorization": `Bearer ${SUPABASE_KEY}`
+                }
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error("Supabase error: " + response.status);
+        }
+
+        const data = await response.json();
+
+        if (data.length > 0) {
+            const playerName = data[0].name;
+
+            document.getElementById("welcomeName").textContent =
+                "Hi, " + playerName + "!";
+        } else {
+            document.getElementById("welcomeName").textContent =
+                "Hi, Guest!";
+
+            console.log("User not found");
+        }
+
+    } catch (error) {
+        console.error("Failed to load username:", error);
+    }
+}
+
+
+// Check Kodular WebViewString until user data arrives
+setInterval(receiveNameFromKodular, 500);
 
 const ACHIEVEMENT_TABLE = "cleanup_achievements";
 
